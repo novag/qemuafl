@@ -74,6 +74,7 @@ struct vmrange* afl_instr_code;
 
 abi_ulong afl_persistent_addr,
           afl_persistent_act_addr,
+          afl_persistent_cont_addr,
           afl_persistent_ret_addr;
 unsigned int afl_persistent_cnt;
 
@@ -557,6 +558,9 @@ void afl_setup(void) {
 
   if (is_persistent)
     afl_persistent_addr = strtoll(getenv("AFL_QEMU_PERSISTENT_ADDR"), NULL, 0);
+
+  if (getenv("AFL_QEMU_PERSISTENT_CONT_ADDR"))
+    afl_persistent_cont_addr = strtoll(getenv("AFL_QEMU_PERSISTENT_CONT_ADDR"), NULL, 0);
 
   if (getenv("AFL_QEMU_PERSISTENT_RET"))
     afl_persistent_ret_addr =
