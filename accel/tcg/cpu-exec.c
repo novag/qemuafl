@@ -72,7 +72,7 @@ abi_ulong afl_entry_point,                      /* ELF entry point (_start) */
 
 struct vmrange* afl_instr_code;
 
-abi_ulong    afl_persistent_pass_addr, afl_persistent_addr, afl_persistent_ret_addr;
+abi_ulong    afl_persistent_pass_addr, afl_persistent_addr, afl_persistent_alt_cont_addr, afl_persistent_ret_addr;
 unsigned int afl_persistent_cnt;
 
 u8 afl_compcov_level;
@@ -598,6 +598,9 @@ void afl_setup(void) {
 
   if (is_persistent)
     afl_persistent_addr = strtoll(getenv("AFL_QEMU_PERSISTENT_ADDR"), NULL, 0);
+
+  if (getenv("AFL_QEMU_PERSISTENT_ALT_CONT_ADDR"))
+    afl_persistent_alt_cont_addr = strtoll(getenv("AFL_QEMU_PERSISTENT_ALT_CONT_ADDR"), NULL, 0);
 
   if (getenv("AFL_QEMU_PERSISTENT_RET"))
     afl_persistent_ret_addr =
