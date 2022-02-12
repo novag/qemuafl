@@ -104,6 +104,7 @@ u32 *shared_buf_len;
 u8   sharedmem_fuzzing;
 
 afl_persistent_hook_fn afl_persistent_hook_ptr;
+afl_persistent_target_hook_fn afl_persistent_target_hook_ptr;
 
 /* Instrumentation ratio: */
 
@@ -543,6 +544,48 @@ void afl_setup(void) {
 #endif
 
   }
+
+  if (getenv("AFL_QEMU_PERSISTENT_TARGET_HOOK")) {
+
+#ifdef AFL_QEMU_STATIC_BUILD
+
+    fprintf(stderr,
+            "[AFL] ERROR: you cannot use AFL_QEMU_PERSISTENT_TARGET_HOOK when "
+            "afl-qemu-trace is static\n");
+    exit(1);
+
+#else
+
+    sharedmem_fuzzing = 1;
+
+    void *plib = dlopen(getenv("AFL_QEMU_PERSISTENT_TARGET_HOOK"), RTLD_NOW);
+    if (!plib) {
+
+      fprintf(stderr, "[AFL] ERROR: invalid AFL_QEMU_PERSISTENT_TARGET_HOOK=%s\n",
+              getenv("AFL_QEMU_PERSISTENT_TARGET_HOOK"));
+      exit(1);
+
+    }
+
+    void (*afl_persistent_target_hook_init_ptr)(void) =
+        dlsym(plib, "afl_persistent_target_hook_init");
+    if (afl_persistent_target_hook_init_ptr)
+      afl_persistent_target_hook_init_ptr();
+
+    afl_persistent_target_hook_ptr = dlsym(plib, "afl_persistent_target_hook");
+    if (!afl_persistent_target_hook_ptr) {
+
+      fprintf(stderr,
+              "[AFL] ERROR: failed to find the function "
+              "\"afl_persistent_target_hook\" in %s\n",
+              getenv("AFL_QEMU_PERSISTENT_TARGET_HOOK"));
+      exit(1);
+
+    }
+
+#endif
+
+  }
   
   if (__afl_cmp_map) return; // no persistent for cmplog
   
@@ -798,6 +841,12 @@ void afl_persistent_iter(CPUArchState *env) {
 
     }
 
+    if (afl_persistent_target_hook_ptr) {
+
+      afl_persistent_target_hook_ptr(shared_buf, *shared_buf_len);
+
+    }
+
     afl_area_ptr[0] = 1;
     afl_prev_loc = 0;
 
@@ -843,6 +892,12 @@ void afl_persistent_loop(CPUArchState *env) {
         afl_restore_regs(&hook_regs, env);
 
       }
+
+    }
+
+    if (afl_persistent_target_hook_ptr) {
+
+      afl_persistent_target_hook_ptr(shared_buf, *shared_buf_len);
 
     }
     
