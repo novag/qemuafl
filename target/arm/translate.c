@@ -47,7 +47,13 @@
 #define AFL_QEMU_TARGET_ARM_SNIPPET                                            \
   if (is_persistent) {                                                         \
                                                                                \
-    if (dc->pc_curr == afl_persistent_addr) {                                  \
+    if (!is_persistent_active && dc->pc_curr == afl_persistent_act_addr) {    \
+                                                                               \
+      is_persistent_active = 1;                                                \
+                                                                               \
+      tb_invalidate_phys_addr(afl_persistent_addr);                            \
+                                                                               \
+    } else if (is_persistent_active && dc->pc_curr == afl_persistent_addr) {   \
                                                                                \
       gen_helper_afl_persistent_routine(cpu_env);                              \
                                                                                \
@@ -59,7 +65,7 @@
                                                                                \
       if (!persistent_save_gpr) afl_gen_tcg_plain_call(&afl_persistent_loop);  \
                                                                                \
-    } else if (afl_persistent_ret_addr &&                                      \
+    } else if (is_persistent_active && afl_persistent_ret_addr &&              \
                dc->pc_curr == afl_persistent_ret_addr) {                       \
                                                                                \
       TCGv_i32 tmp = tcg_const_i32(afl_persistent_addr);                       \
@@ -73,7 +79,15 @@
 #define AFL_QEMU_TARGET_THUMB_SNIPPET                                          \
   if (is_persistent) {                                                         \
                                                                                \
-    if (dc->pc_curr == (afl_persistent_addr & ~1)) {                           \
+    if (!is_persistent_active &&                                               \
+        dc->pc_curr == (afl_persistent_act_addr & ~1)) {                      \
+                                                                               \
+      is_persistent_active = 1;                                                \
+                                                                               \
+      tb_invalidate_phys_addr(afl_persistent_addr & ~1);                       \
+                                                                               \
+    } else if (is_persistent_active &&                                         \
+               dc->pc_curr == (afl_persistent_addr & ~1)) {                    \
                                                                                \
       gen_helper_afl_persistent_routine(cpu_env);                              \
                                                                                \
@@ -85,7 +99,7 @@
                                                                                \
       if (!persistent_save_gpr) afl_gen_tcg_plain_call(&afl_persistent_loop);  \
                                                                                \
-    } else if (afl_persistent_ret_addr &&                                      \
+    } else if (is_persistent_active && afl_persistent_ret_addr &&              \
                dc->pc_curr == afl_persistent_ret_addr) {                       \
                                                                                \
       TCGv_i32 tmp = tcg_const_i32(afl_persistent_addr | 1);                   \
