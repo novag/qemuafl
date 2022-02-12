@@ -53,6 +53,8 @@
                                                                                \
       tb_invalidate_phys_addr(afl_persistent_addr);                            \
       tb_invalidate_phys_addr(afl_persistent_cont_addr);                       \
+      tb_invalidate_phys_addr(afl_persistent_cont_2_addr);                     \
+      tb_invalidate_phys_addr(afl_persistent_cont_3_addr);                     \
                                                                                \
     } else if (is_persistent_active && dc->pc_curr == afl_persistent_addr) {   \
                                                                                \
@@ -69,6 +71,16 @@
                                                                                \
     } else if (is_persistent_active && afl_persistent_cont_addr &&             \
                dc->pc_curr == afl_persistent_cont_addr) {                      \
+                                                                               \
+      gen_helper_afl_persistent_routine(cpu_env);                              \
+                                                                               \
+    } else if (is_persistent_active && afl_persistent_cont_2_addr &&           \
+               dc->pc_curr == afl_persistent_cont_2_addr) {                    \
+                                                                               \
+      gen_helper_afl_persistent_routine(cpu_env);                              \
+                                                                               \
+    } else if (is_persistent_active && afl_persistent_cont_3_addr &&           \
+               dc->pc_curr == afl_persistent_cont_3_addr) {                    \
                                                                                \
       gen_helper_afl_persistent_routine(cpu_env);                              \
                                                                                \
@@ -93,6 +105,8 @@
                                                                                \
       tb_invalidate_phys_addr(afl_persistent_addr & ~1);                       \
       tb_invalidate_phys_addr(afl_persistent_cont_addr & ~1);                  \
+      tb_invalidate_phys_addr(afl_persistent_cont_2_addr & ~1);                \
+      tb_invalidate_phys_addr(afl_persistent_cont_3_addr & ~1);                \
                                                                                \
     } else if (is_persistent_active &&                                         \
                dc->pc_curr == (afl_persistent_addr & ~1)) {                    \
@@ -110,6 +124,16 @@
                                                                                \
     } else if (is_persistent_active && afl_persistent_cont_addr &&             \
                dc->pc_curr == afl_persistent_cont_addr) {                      \
+                                                                               \
+      gen_helper_afl_persistent_routine(cpu_env);                              \
+                                                                               \
+    } else if (is_persistent_active && afl_persistent_cont_2_addr &&           \
+               dc->pc_curr == afl_persistent_cont_2_addr) {                    \
+                                                                               \
+      gen_helper_afl_persistent_routine(cpu_env);                              \
+                                                                               \
+    } else if (is_persistent_active && afl_persistent_cont_3_addr &&           \
+               dc->pc_curr == afl_persistent_cont_3_addr) {                    \
                                                                                \
       gen_helper_afl_persistent_routine(cpu_env);                              \
                                                                                \

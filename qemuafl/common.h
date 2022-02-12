@@ -99,6 +99,8 @@ extern abi_ulong       afl_entry_point, afl_start_code, afl_end_code;
 extern abi_ulong       afl_persistent_act_addr;
 extern abi_ulong       afl_persistent_addr;
 extern abi_ulong       afl_persistent_cont_addr;
+extern abi_ulong       afl_persistent_cont_2_addr;
+extern abi_ulong       afl_persistent_cont_3_addr;
 extern abi_ulong       afl_persistent_ret_addr;
 extern u8              afl_compcov_level;
 extern unsigned char   afl_fork_child;
