@@ -873,7 +873,7 @@ void afl_persistent_iter(CPUArchState *env) {
 
 }
 
-void afl_persistent_loop(CPUArchState *env) {
+void afl_persistent_loop(CPUArchState *env, abi_ulong addr) {
 
   if (!afl_fork_child) return;
 

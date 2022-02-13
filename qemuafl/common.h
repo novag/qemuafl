@@ -134,7 +134,7 @@ extern struct cmp_map *__afl_cmp_map;
 void afl_setup(void);
 void afl_forkserver(CPUState *cpu);
 void afl_persistent_iter(CPUArchState *env);
-void afl_persistent_loop(CPUArchState *env);
+void afl_persistent_loop(CPUArchState *env, abi_ulong addr);
 
 // void afl_debug_dump_saved_regs(void);
 

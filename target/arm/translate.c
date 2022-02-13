@@ -58,7 +58,9 @@
                                                                                \
     } else if (is_persistent_active && dc->pc_curr == afl_persistent_addr) {   \
                                                                                \
-      gen_helper_afl_persistent_routine(cpu_env);                              \
+      TCGv cur_loc_v = tcg_const_tl(afl_persistent_addr);                      \
+      gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
+      tcg_temp_free(cur_loc_v);                                                \
                                                                                \
       if (afl_persistent_cont_addr == 0 && afl_persistent_ret_addr == 0 &&     \
           !persistent_exits) {                                                 \
@@ -72,17 +74,23 @@
     } else if (is_persistent_active && afl_persistent_cont_addr &&             \
                dc->pc_curr == afl_persistent_cont_addr) {                      \
                                                                                \
-      gen_helper_afl_persistent_routine(cpu_env);                              \
+      TCGv cur_loc_v = tcg_const_tl(afl_persistent_cont_addr);                 \
+      gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
+      tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_cont_2_addr &&           \
                dc->pc_curr == afl_persistent_cont_2_addr) {                    \
                                                                                \
-      gen_helper_afl_persistent_routine(cpu_env);                              \
+      TCGv cur_loc_v = tcg_const_tl(afl_persistent_cont_2_addr);               \
+      gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
+      tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_cont_3_addr &&           \
                dc->pc_curr == afl_persistent_cont_3_addr) {                    \
                                                                                \
-      gen_helper_afl_persistent_routine(cpu_env);                              \
+      TCGv cur_loc_v = tcg_const_tl(afl_persistent_cont_3_addr);               \
+      gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
+      tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_ret_addr &&              \
                dc->pc_curr == afl_persistent_ret_addr) {                       \
@@ -111,7 +119,9 @@
     } else if (is_persistent_active &&                                         \
                dc->pc_curr == (afl_persistent_addr & ~1)) {                    \
                                                                                \
-      gen_helper_afl_persistent_routine(cpu_env);                              \
+      TCGv cur_loc_v = tcg_const_tl(afl_persistent_addr);                      \
+      gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
+      tcg_temp_free(cur_loc_v);                                                \
                                                                                \
       if (afl_persistent_cont_addr == 0 && afl_persistent_ret_addr == 0 &&     \
           !persistent_exits) {                                                 \
@@ -125,17 +135,23 @@
     } else if (is_persistent_active && afl_persistent_cont_addr &&             \
                dc->pc_curr == afl_persistent_cont_addr) {                      \
                                                                                \
-      gen_helper_afl_persistent_routine(cpu_env);                              \
+      TCGv cur_loc_v = tcg_const_tl(afl_persistent_cont_addr);                 \
+      gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
+      tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_cont_2_addr &&           \
                dc->pc_curr == afl_persistent_cont_2_addr) {                    \
                                                                                \
-      gen_helper_afl_persistent_routine(cpu_env);                              \
+      TCGv cur_loc_v = tcg_const_tl(afl_persistent_cont_2_addr);               \
+      gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
+      tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_cont_3_addr &&           \
                dc->pc_curr == afl_persistent_cont_3_addr) {                    \
                                                                                \
-      gen_helper_afl_persistent_routine(cpu_env);                              \
+      TCGv cur_loc_v = tcg_const_tl(afl_persistent_cont_3_addr);               \
+      gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
+      tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_ret_addr &&              \
                dc->pc_curr == afl_persistent_ret_addr) {                       \
