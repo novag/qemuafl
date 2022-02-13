@@ -49,6 +49,8 @@
                                                                                \
     if (!is_persistent_active && dc->pc_curr == afl_persistent_pass_addr) {    \
                                                                                \
+      fprintf(stderr, "[arm] AFL_QEMU_PERSISTENT_PASS_ADDR found\n");          \
+                                                                               \
       is_persistent_active = 1;                                                \
                                                                                \
       tb_invalidate_phys_addr(afl_persistent_addr);                            \
@@ -57,6 +59,8 @@
       tb_invalidate_phys_addr(afl_persistent_alt_cont_3_addr);                 \
                                                                                \
     } else if (is_persistent_active && dc->pc_curr == afl_persistent_addr) {   \
+                                                                               \
+      fprintf(stderr, "[arm] AFL_QEMU_PERSISTENT_ADDR found\n");               \
                                                                                \
       TCGv cur_loc_v = tcg_const_tl(afl_persistent_addr);                      \
       gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
@@ -74,12 +78,16 @@
     } else if (is_persistent_active && afl_persistent_alt_cont_addr &&         \
                dc->pc_curr == afl_persistent_alt_cont_addr) {                  \
                                                                                \
+      fprintf(stderr, "[arm] AFL_QEMU_PERSISTENT_ALT_CONT_ADDR found\n");      \
+                                                                               \
       TCGv cur_loc_v = tcg_const_tl(afl_persistent_alt_cont_addr);             \
       gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
       tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_alt_cont_2_addr &&       \
                dc->pc_curr == afl_persistent_alt_cont_2_addr) {                \
+                                                                               \
+      fprintf(stderr, "[arm] AFL_QEMU_PERSISTENT_ALT_CONT_2_ADDR found\n");    \
                                                                                \
       TCGv cur_loc_v = tcg_const_tl(afl_persistent_alt_cont_2_addr);           \
       gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
@@ -88,12 +96,16 @@
     } else if (is_persistent_active && afl_persistent_alt_cont_3_addr &&       \
                dc->pc_curr == afl_persistent_alt_cont_3_addr) {                \
                                                                                \
+      fprintf(stderr, "[arm] AFL_QEMU_PERSISTENT_ALT_CONT_3_ADDR found\n");    \
+                                                                               \
       TCGv cur_loc_v = tcg_const_tl(afl_persistent_alt_cont_3_addr);           \
       gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
       tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_ret_addr &&              \
                dc->pc_curr == afl_persistent_ret_addr) {                       \
+                                                                               \
+      fprintf(stderr, "[arm] AFL_QEMU_PERSISTENT_RET_ADDR found\n");           \
                                                                                \
       TCGv_i32 tmp = tcg_const_i32(afl_persistent_addr);                       \
       gen_bx(dc, tmp);                                                         \
@@ -109,6 +121,8 @@
     if (!is_persistent_active &&                                               \
         dc->pc_curr == (afl_persistent_pass_addr & ~1)) {                      \
                                                                                \
+      fprintf(stderr, "[thumb] AFL_QEMU_PERSISTENT_PASS_ADDR found\n");        \
+                                                                               \
       is_persistent_active = 1;                                                \
                                                                                \
       tb_invalidate_phys_addr(afl_persistent_addr & ~1);                       \
@@ -118,6 +132,8 @@
                                                                                \
     } else if (is_persistent_active &&                                         \
                dc->pc_curr == (afl_persistent_addr & ~1)) {                    \
+                                                                               \
+      fprintf(stderr, "[thumb] AFL_QEMU_PERSISTENT_ADDR found\n");             \
                                                                                \
       TCGv cur_loc_v = tcg_const_tl(afl_persistent_addr);                      \
       gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
@@ -135,12 +151,16 @@
     } else if (is_persistent_active && afl_persistent_alt_cont_addr &&         \
                dc->pc_curr == afl_persistent_alt_cont_addr) {                  \
                                                                                \
+      fprintf(stderr, "[thumb] AFL_QEMU_PERSISTENT_ALT_CONT_ADDR found\n");    \
+                                                                               \
       TCGv cur_loc_v = tcg_const_tl(afl_persistent_alt_cont_addr);             \
       gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
       tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_alt_cont_2_addr &&       \
                dc->pc_curr == afl_persistent_alt_cont_2_addr) {                \
+                                                                               \
+      fprintf(stderr, "[thumb] AFL_QEMU_PERSISTENT_ALT_CONT_2_ADDR found\n");  \
                                                                                \
       TCGv cur_loc_v = tcg_const_tl(afl_persistent_alt_cont_2_addr);           \
       gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
@@ -149,12 +169,16 @@
     } else if (is_persistent_active && afl_persistent_alt_cont_3_addr &&       \
                dc->pc_curr == afl_persistent_alt_cont_3_addr) {                \
                                                                                \
+      fprintf(stderr, "[thumb] AFL_QEMU_PERSISTENT_ALT_CONT_3_ADDR found\n");  \
+                                                                               \
       TCGv cur_loc_v = tcg_const_tl(afl_persistent_alt_cont_3_addr);           \
       gen_helper_afl_persistent_routine(cpu_env, cur_loc_v);                   \
       tcg_temp_free(cur_loc_v);                                                \
                                                                                \
     } else if (is_persistent_active && afl_persistent_ret_addr &&              \
                dc->pc_curr == afl_persistent_ret_addr) {                       \
+                                                                               \
+      fprintf(stderr, "[thumb] AFL_QEMU_PERSISTENT_RET_ADDR found\n");         \
                                                                                \
       TCGv_i32 tmp = tcg_const_i32(afl_persistent_addr | 1);                   \
       gen_bx(dc, tmp);                                                         \
