@@ -81,6 +81,9 @@ typedef void (*afl_persistent_hook_fn)(struct api_regs *regs,
                                        uint8_t *input_buf,
                                        uint32_t input_buf_len);
 
+typedef void (*afl_persistent_target_hook_fn)(uint8_t *input_buf,
+                                              uint32_t input_buf_len);
+
 /* Declared in afl-qemu-cpu-inl.h */
 
 // This structure is used for tracking which
@@ -122,6 +125,7 @@ extern u32 *shared_buf_len;
 extern u8   sharedmem_fuzzing;
 
 extern afl_persistent_hook_fn afl_persistent_hook_ptr;
+extern afl_persistent_target_hook_fn afl_persistent_target_hook_ptr;
 
 extern __thread abi_ulong afl_prev_loc;
 
