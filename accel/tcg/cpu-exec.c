@@ -874,6 +874,14 @@ void afl_persistent_loop(CPUArchState *env, abi_ulong addr) {
 
   if (!afl_fork_child) return;
 
+  if (afl_persistent_alt_cont_addr &&
+      addr == afl_persistent_alt_cont_addr &&
+      env->regs[0] == 0) return;
+
+  if (afl_persistent_alt_cont_2_addr &&
+      addr == afl_persistent_alt_cont_2_addr &&
+      (env->regs[0] != 0xFFFFFC15 && env->regs[0] != 0xFFFFFC0B)) return;
+
   if (persistent_first_pass) {
 
     /* Make sure that every iteration of __AFL_LOOP() starts with a clean slate.
