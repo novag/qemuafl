@@ -91,7 +91,7 @@ static int disable_caching = 0;
 unsigned char afl_fork_child;
 unsigned int  afl_forksrv_pid;
 unsigned char is_persistent;
-unsigned char is_persistent_active;
+unsigned char is_persistent_active = 1;
 target_long   persistent_stack_offset;
 unsigned char persistent_first_pass = 1;
 unsigned char persistent_exits;
@@ -593,8 +593,6 @@ void afl_setup(void) {
   
   is_persistent = getenv("AFL_QEMU_PERSISTENT_ADDR") != NULL;
 
-  is_persistent_active = getenv("AFL_QEMU_PERSISTENT_PASS_ADDR") == NULL;
-
   if (getenv("AFL_QEMU_PERSISTENT_PASS_ADDR"))
     afl_persistent_pass_addr = strtoll(getenv("AFL_QEMU_PERSISTENT_PASS_ADDR"), NULL, 0);
 
@@ -802,6 +800,12 @@ void afl_forkserver(CPUState *cpu) {
     if (write(FORKSRV_FD + 1, &status, 4) != 4) exit(7);
 
   }
+
+}
+
+void afl_on_entry(CPUArchState *env) {
+
+  is_persistent_active = getenv("AFL_QEMU_PERSISTENT_PASS_ADDR") == NULL;
 
 }
 

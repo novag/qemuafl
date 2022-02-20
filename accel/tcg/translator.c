@@ -98,6 +98,10 @@ void translator_loop(const TranslatorOps *ops, DisasContextBase *db,
             gen_helper_afl_entry_routine(cpu_env);
         }
 
+        if (db->pc_first == afl_entry_point) {
+            gen_helper_afl_on_entry_routine(cpu_env);
+        }
+
         /* Disassemble one instruction.  The translate_insn hook should
            update db->pc_next and db->is_jmp to indicate what should be
            done next -- either exiting this loop or locate the start of
