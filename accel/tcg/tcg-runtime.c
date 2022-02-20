@@ -42,6 +42,12 @@ void HELPER(afl_entry_routine)(CPUArchState *env) {
 
 }
 
+void HELPER(afl_on_entry_routine)(CPUArchState *env) {
+
+  afl_on_entry(env);
+
+}
+
 void HELPER(afl_persistent_routine)(CPUArchState *env, target_ulong addr) {
 
   afl_persistent_loop(env, addr);

@@ -596,8 +596,6 @@ void afl_setup(void) {
   
   is_persistent = getenv("AFL_QEMU_PERSISTENT_ADDR") != NULL;
 
-  is_persistent_active = getenv("AFL_QEMU_PERSISTENT_ACT_ADDR") == NULL;
-
   if (getenv("AFL_QEMU_PERSISTENT_ACT_ADDR"))
     afl_persistent_act_addr = strtoll(getenv("AFL_QEMU_PERSISTENT_ACT_ADDR"), NULL, 0);
 
@@ -805,6 +803,14 @@ void afl_forkserver(CPUState *cpu) {
     if (write(FORKSRV_FD + 1, &status, 4) != 4) exit(7);
 
   }
+
+}
+
+/* Reset persistent mode state on respawn for activation address to
+   become effective. If no activation address spcified, always enable. */
+void afl_on_entry(CPUArchState *env) {
+
+  is_persistent_active = afl_persistent_act_addr == 0;
 
 }
 
