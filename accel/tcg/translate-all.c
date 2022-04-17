@@ -73,6 +73,8 @@ __thread int cur_block_is_good;
 
 void HELPER(afl_maybe_log)(target_ulong cur_loc) {
 
+  if (!afl_must_instrument_thread()) return;
+
   register uintptr_t afl_idx = cur_loc ^ afl_prev_loc;
 
   INC_AFL_AREA(afl_idx);

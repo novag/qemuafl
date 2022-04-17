@@ -34,6 +34,8 @@
 #ifndef __AFL_QEMU_COMMON
 #define __AFL_QEMU_COMMON
 
+#include <sys/syscall.h>
+
 #include "imported/config.h"
 #include "imported/types.h"
 #include "imported/cmplog.h"
@@ -95,9 +97,19 @@ struct vmrange {
   struct vmrange* next;
 };
 
+// AFL++ thread-aware instrumentation
+typedef struct {
+  bool enable;
+  char **names;
+  size_t names_size;
+  unsigned int *tids;
+  size_t tids_size;
+} instr_threads_t;
+
 extern struct vmrange* afl_instr_code;
 extern unsigned char  *afl_area_ptr;
 extern unsigned int    afl_inst_rms;
+extern instr_threads_t afl_instr_threads;
 extern abi_ulong       afl_entry_point, afl_start_code, afl_end_code;
 extern abi_ulong       afl_persistent_act_addr;
 extern abi_ulong       afl_persistent_addr;
@@ -136,6 +148,9 @@ void afl_forkserver(CPUState *cpu);
 void afl_on_entry(CPUArchState *env);
 void afl_persistent_iter(CPUArchState *env);
 void afl_persistent_loop(CPUArchState *env, abi_ulong addr);
+
+int thread_name_cmp(const void *a, const void *b);
+int thread_id_cmp(const void *a, const void *b);
 
 // void afl_debug_dump_saved_regs(void);
 
@@ -182,7 +197,6 @@ static inline int is_valid_addr(target_ulong addr) {
 }
 
 static inline int afl_must_instrument(target_ulong addr) {
-
   // Reject any exclusion regions
   for (struct vmrange* n = afl_instr_code; n; n = n->next) {
     if (n->exclude && addr < n->end && addr >= n->start)
@@ -200,6 +214,22 @@ static inline int afl_must_instrument(target_ulong addr) {
 
   return 0;
 
+}
+
+static inline int afl_must_instrument_thread(void) {
+  unsigned int tid;
+
+  if (afl_instr_threads.enable) {
+    if (afl_instr_threads.tids_size == 0)
+      return 0;
+
+    tid = syscall(__NR_gettid);
+    if (bsearch(&tid, afl_instr_threads.tids, afl_instr_threads.tids_size,
+        sizeof(unsigned int), thread_id_cmp) == NULL)
+      return 0;
+  }
+
+  return 1;
 }
 
 #endif

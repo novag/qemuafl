@@ -10858,6 +10858,23 @@ static abi_long do_syscall1(void *cpu_env, int num, abi_long arg1,
             if (!name) {
                 return -TARGET_EFAULT;
             }
+
+            // AFL++ thread-aware instrumentation
+            if (afl_instr_threads.names_size > 0
+                && bsearch(&name, afl_instr_threads.names,
+                           afl_instr_threads.names_size, sizeof(char *),
+                           thread_name_cmp) != NULL) {
+                afl_instr_threads.tids_size++;
+                afl_instr_threads.tids = realloc(afl_instr_threads.tids,
+                                                 sizeof(unsigned int) *
+                                                 afl_instr_threads.tids_size);
+                afl_instr_threads.tids[afl_instr_threads.tids_size - 1] =
+                        sys_gettid();
+                qsort(afl_instr_threads.tids, afl_instr_threads.tids_size,
+                      sizeof(unsigned int), thread_id_cmp);
+                printf("Found thread '%s' with id %d\n", (char *) name, sys_gettid());
+            }
+
             ret = get_errno(prctl(arg1, (unsigned long)name,
                                   arg3, arg4, arg5));
             unlock_user(name, arg2, 0);

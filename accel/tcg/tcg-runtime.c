@@ -57,6 +57,8 @@ void HELPER(afl_persistent_routine)(CPUArchState *env, target_ulong addr) {
 void HELPER(afl_compcov_16)(target_ulong cur_loc, target_ulong arg1,
                             target_ulong arg2) {
 
+  if (!afl_must_instrument_thread()) return;
+
   register uintptr_t idx = cur_loc;
 
   if ((arg1 & 0xff00) == (arg2 & 0xff00)) { INC_AFL_AREA(idx); }
@@ -65,6 +67,8 @@ void HELPER(afl_compcov_16)(target_ulong cur_loc, target_ulong arg1,
 
 void HELPER(afl_compcov_32)(target_ulong cur_loc, target_ulong arg1,
                             target_ulong arg2) {
+
+  if (!afl_must_instrument_thread()) return;
 
   register uintptr_t idx = cur_loc;
 
@@ -84,6 +88,8 @@ void HELPER(afl_compcov_32)(target_ulong cur_loc, target_ulong arg1,
 
 void HELPER(afl_compcov_64)(target_ulong cur_loc, target_ulong arg1,
                             target_ulong arg2) {
+
+  if (!afl_must_instrument_thread()) return;
 
   register uintptr_t idx = cur_loc;
 

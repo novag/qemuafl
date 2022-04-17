@@ -71,6 +71,7 @@ abi_ulong afl_entry_point,                      /* ELF entry point (_start) */
     afl_end_code;                               /* .text end pointer        */
 
 struct vmrange* afl_instr_code;
+instr_threads_t afl_instr_threads;
 
 abi_ulong afl_persistent_addr,
           afl_persistent_act_addr,
@@ -271,6 +272,18 @@ static void restore_memory_snapshot(void) {
   }
   
   afl_target_unmap_trackeds();
+
+}
+
+int thread_name_cmp(const void *a, const void *b) {
+
+  return strncmp(*(char **) a, *(char **) b, 15);
+
+}
+
+int thread_id_cmp(const void *a, const void *b) {
+
+  return *(int *) a - *(int *) b;
 
 }
 
@@ -476,6 +489,32 @@ void afl_setup(void) {
       }
     }
     free_self_maps(map_info);
+  }
+
+  if (getenv("AFL_QEMU_WHITELIST_THREADS")) {
+    char *str = getenv("AFL_QEMU_WHITELIST_THREADS");
+    char *saveptr1, *pt1;
+
+    afl_instr_threads.enable = true;
+
+    while (1) {
+
+      pt1 = strtok_r(str, ",", &saveptr1);
+      if (pt1 == NULL) break;
+      str = NULL;
+
+      afl_instr_threads.names_size += 1;
+      afl_instr_threads.names = realloc(afl_instr_threads.names, sizeof(char *)
+                                        * afl_instr_threads.names_size);
+
+      afl_instr_threads.names[afl_instr_threads.names_size - 1] =
+          strndup(pt1, 15);
+
+    }
+
+    qsort(afl_instr_threads.names, afl_instr_threads.names_size,
+          sizeof(char *), thread_name_cmp);
+
   }
 
   if (getenv("AFL_DEBUG") && afl_instr_code) {
@@ -883,12 +922,12 @@ void afl_persistent_loop(CPUArchState *env, abi_ulong addr) {
 
   if (!afl_fork_child) return;
 
-  if (afl_persistent_alt_cont_addr &&
-      addr == afl_persistent_alt_cont_addr &&
+  if (afl_persistent_cont_addr &&
+      addr == afl_persistent_cont_addr &&
       env->regs[0] == 0) return;
 
-  if (afl_persistent_alt_cont_2_addr &&
-      addr == afl_persistent_alt_cont_2_addr &&
+  if (afl_persistent_cont_2_addr &&
+      addr == afl_persistent_cont_2_addr &&
       (env->regs[0] != 0xFFFFFC15 && env->regs[0] != 0xFFFFFC0B)) return;
 
   if (persistent_first_pass) {
