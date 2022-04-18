@@ -50,7 +50,17 @@ void HELPER(afl_on_entry_routine)(CPUArchState *env) {
 
 void HELPER(afl_persistent_routine)(CPUArchState *env, target_ulong addr) {
 
-  afl_persistent_loop(env, addr);
+  if (is_persistent_active) {
+
+    afl_persistent_loop(env, addr);
+
+  }
+
+}
+
+void HELPER(afl_enable_persistent)(CPUArchState *env) {
+
+  is_persistent_active = 1;
 
 }
 
