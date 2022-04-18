@@ -110,7 +110,7 @@ u32 *shared_buf_len;
 u8   sharedmem_fuzzing;
 
 afl_persistent_hook_fn afl_persistent_hook_ptr;
-afl_persistent_target_hook_fn afl_persistent_target_hook_ptr;
+afl_persistent_hook_fn afl_persistent_target_hook_ptr;
 
 /* Instrumentation ratio: */
 
@@ -902,7 +902,11 @@ void afl_persistent_iter(CPUArchState *env) {
 
     if (afl_persistent_target_hook_ptr) {
 
-      afl_persistent_target_hook_ptr(shared_buf, *shared_buf_len);
+      afl_save_regs(&saved_regs, env);
+      struct api_regs hook_regs = saved_regs;
+      afl_persistent_target_hook_ptr(&hook_regs, guest_base, shared_buf,
+                                     *shared_buf_len);
+      afl_restore_regs(&hook_regs, env);
 
     }
 
@@ -964,7 +968,12 @@ void afl_persistent_loop(CPUArchState *env, abi_ulong addr) {
 
     if (afl_persistent_target_hook_ptr) {
 
-      afl_persistent_target_hook_ptr(shared_buf, *shared_buf_len);
+      afl_save_regs(&saved_regs, env);
+      struct api_regs hook_regs = saved_regs;
+      afl_persistent_target_hook_ptr(&hook_regs, guest_base, shared_buf,
+                                     *shared_buf_len);
+      afl_restore_regs(&hook_regs, env);
+
 
     }
     
