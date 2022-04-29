@@ -99,8 +99,11 @@ void asan_giovese_alloc_insert(target_ulong start, target_ulong end,
 
 void* __ag_high_shadow = HIGH_SHADOW_ADDR;
 void* __ag_low_shadow = LOW_SHADOW_ADDR;
+FILE *fp_log;
 
 void asan_giovese_init(void) {
+
+  char *log_path = getenv("AFL_QEMU_QASAN_LOG_PATH");
 
 #if UINTPTR_MAX == 0xffffffff
   fprintf(stderr, "ERROR: Cannot allocate sanitizer shadow memory on 32 bit "
@@ -119,6 +122,16 @@ void asan_giovese_init(void) {
               MAP_PRIVATE | MAP_FIXED | MAP_NORESERVE | MAP_ANON, -1,
               0) != MAP_FAILED);
 #endif
+
+  if (log_path == NULL) {
+
+    fp_log = stderr;
+
+  } else {
+
+    fp_log = fopen(log_path, "a");
+
+  }
 
 }
 
@@ -911,7 +924,7 @@ static int poisoned_find_error(target_ulong addr, size_t n,
 
 static int print_shadow_line(target_ulong addr) {
 
-  fprintf(stderr,
+  fprintf(fp_log,
           "  0x%012" PRIxPTR ": %s%02x" ANSI_COLOR_RESET
           " %s%02x" ANSI_COLOR_RESET " %s%02x" ANSI_COLOR_RESET
           " %s%02x" ANSI_COLOR_RESET " %s%02x" ANSI_COLOR_RESET
@@ -1146,7 +1159,7 @@ static int print_shadow_line_fault(target_ulong addr, target_ulong fault_addr) {
 
   }
 
-  fprintf(stderr, format, (uintptr_t)_MEM2SHADOW(addr), _MEM2SHADOWPRINT(addr),
+  fprintf(fp_log, format, (uintptr_t)_MEM2SHADOW(addr), _MEM2SHADOWPRINT(addr),
           _MEM2SHADOWPRINT(addr + 8), _MEM2SHADOWPRINT(addr + 16),
           _MEM2SHADOWPRINT(addr + 24), _MEM2SHADOWPRINT(addr + 32),
           _MEM2SHADOWPRINT(addr + 40), _MEM2SHADOWPRINT(addr + 48),
@@ -1184,7 +1197,7 @@ static void print_alloc_location_chunk(struct chunk_info* ckinfo,
                                        target_ulong       fault_addr) {
 
   if (fault_addr >= ckinfo->start && fault_addr < ckinfo->end)
-    fprintf(stderr,
+    fprintf(fp_log,
             ANSI_COLOR_HGRN
             "0x" TARGET_FMT_lx " is located " TARGET_FMT_ld
             " bytes inside of " TARGET_FMT_ld "-byte region [0x"
@@ -1192,7 +1205,7 @@ static void print_alloc_location_chunk(struct chunk_info* ckinfo,
             fault_addr, fault_addr - ckinfo->start, ckinfo->end - ckinfo->start,
             ckinfo->start, ckinfo->end);
   else if (ckinfo->start >= fault_addr)
-    fprintf(stderr,
+    fprintf(fp_log,
             ANSI_COLOR_HGRN
             "0x" TARGET_FMT_lx " is located " TARGET_FMT_ld
             " bytes to the left of " TARGET_FMT_ld "-byte region [0x"
@@ -1200,7 +1213,7 @@ static void print_alloc_location_chunk(struct chunk_info* ckinfo,
             fault_addr, ckinfo->start - fault_addr, ckinfo->end - ckinfo->start,
             ckinfo->start, ckinfo->end);
   else
-    fprintf(stderr,
+    fprintf(fp_log,
             ANSI_COLOR_HGRN
             "0x" TARGET_FMT_lx " is located " TARGET_FMT_ld
             " bytes to the right of " TARGET_FMT_ld "-byte region [0x"
@@ -1210,7 +1223,7 @@ static void print_alloc_location_chunk(struct chunk_info* ckinfo,
 
   if (ckinfo->free_ctx) {
 
-    fprintf(stderr,
+    fprintf(fp_log,
             ANSI_COLOR_HMAG "freed by thread T%d here:" ANSI_COLOR_RESET "\n",
             ckinfo->free_ctx->tid);
     size_t i;
@@ -1218,23 +1231,23 @@ static void print_alloc_location_chunk(struct chunk_info* ckinfo,
 
       char* printable = asan_giovese_printaddr(ckinfo->free_ctx->addresses[i]);
       if (printable)
-        fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "%s\n", i,
+        fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "%s\n", i,
                 ckinfo->free_ctx->addresses[i], printable);
       else
-        fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "\n", i,
+        fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "\n", i,
                 ckinfo->free_ctx->addresses[i]);
     }
 
-    fputc('\n', stderr);
+    fputc('\n', fp_log);
 
-    fprintf(stderr,
+    fprintf(fp_log,
             ANSI_COLOR_HMAG
             "previously allocated by thread T%d here:" ANSI_COLOR_RESET "\n",
             ckinfo->free_ctx->tid);
 
   } else
 
-    fprintf(stderr,
+    fprintf(fp_log,
             ANSI_COLOR_HMAG "allocated by thread T%d here:" ANSI_COLOR_RESET
                             "\n",
             ckinfo->alloc_ctx->tid);
@@ -1244,15 +1257,15 @@ static void print_alloc_location_chunk(struct chunk_info* ckinfo,
 
     char* printable = asan_giovese_printaddr(ckinfo->alloc_ctx->addresses[i]);
     if (printable)
-      fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "%s\n", i,
+      fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "%s\n", i,
               ckinfo->alloc_ctx->addresses[i], printable);
     else
-      fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "\n", i,
+      fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "\n", i,
               ckinfo->alloc_ctx->addresses[i]);
 
   }
 
-  fputc('\n', stderr);
+  fputc('\n', fp_log);
 
 }
 
@@ -1288,7 +1301,7 @@ static void print_alloc_location(target_ulong addr, target_ulong fault_addr) {
 
   }
 
-  fprintf(stderr, "Address 0x" TARGET_FMT_lx " is a wild pointer.\n",
+  fprintf(fp_log, "Address 0x" TARGET_FMT_lx " is a wild pointer.\n",
           fault_addr);
 
 }
@@ -1304,14 +1317,14 @@ int asan_giovese_report_and_crash(int access_type, target_ulong addr, size_t n,
 
   if (!poisoned_find_error(addr, n, &fault_addr, &error_type)) return 0;
   
-  fprintf(stderr,
+  fprintf(fp_log,
           "=================================================================\n"
           ANSI_COLOR_HRED "==%d==ERROR: " ASAN_NAME_STR ": %s on address 0x"
           TARGET_FMT_lx " at pc 0x" TARGET_FMT_lx " bp 0x" TARGET_FMT_lx
           " sp 0x" TARGET_FMT_lx ANSI_COLOR_RESET "\n",
           getpid(), error_type, addr, pc, bp, sp);
 
-  fprintf(stderr,
+  fprintf(fp_log,
           ANSI_COLOR_HBLU "%s of size %zu at 0x" TARGET_FMT_lx " thread T%d"
           ANSI_COLOR_RESET "\n",
           access_type_str[access_type], n, addr, ctx.tid);
@@ -1320,20 +1333,20 @@ int asan_giovese_report_and_crash(int access_type, target_ulong addr, size_t n,
 
     char* printable = asan_giovese_printaddr(ctx.addresses[i]);
     if (printable)
-      fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "%s\n", i, ctx.addresses[i],
+      fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "%s\n", i, ctx.addresses[i],
               printable);
     else
-      fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "\n", i, ctx.addresses[i]);
+      fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "\n", i, ctx.addresses[i]);
 
   }
 
-  fputc('\n', stderr);
+  fputc('\n', fp_log);
 
   print_alloc_location(addr, fault_addr);
 
   const char* printable_pc = asan_giovese_printaddr(pc);
   if (!printable_pc) printable_pc = "";
-  fprintf(stderr,
+  fprintf(fp_log,
           "SUMMARY: " ASAN_NAME_STR
           ": %s%s\n"
           "Shadow bytes around the buggy address:\n",
@@ -1342,7 +1355,7 @@ int asan_giovese_report_and_crash(int access_type, target_ulong addr, size_t n,
   print_shadow(fault_addr);
 
   fprintf(
-      stderr,
+      fp_log,
       "Shadow byte legend (one shadow byte represents 8 application bytes):\n"
       "  Addressable:           00\n"
       "  Partially addressable: 01 02 03 04 05 06 07\n"
@@ -1366,6 +1379,8 @@ int asan_giovese_report_and_crash(int access_type, target_ulong addr, size_t n,
       "  Shadow gap:              cc\n"
       "==%d==ABORTING\n",
       getpid());
+
+  fflush(fp_log);
 
   signal(SIGABRT, SIG_DFL);
   abort();
@@ -1414,7 +1429,7 @@ int asan_giovese_deadly_signal(int signum, target_ulong addr, target_ulong pc, t
   asan_giovese_populate_context(&ctx, pc);
   const char* error_type = singal_to_string[signum];
 
-  fprintf(stderr,
+  fprintf(fp_log,
           ASAN_NAME_STR ":DEADLYSIGNAL\n"
           "=================================================================\n"
           ANSI_COLOR_HRED "==%d==ERROR: " ASAN_NAME_STR
@@ -1428,23 +1443,26 @@ int asan_giovese_deadly_signal(int signum, target_ulong addr, target_ulong pc, t
 
     char* printable = asan_giovese_printaddr(ctx.addresses[i]);
     if (printable)
-      fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "%s\n", i, ctx.addresses[i],
+      fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "%s\n", i, ctx.addresses[i],
               printable);
     else
-      fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "\n", i, ctx.addresses[i]);
+      fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "\n", i, ctx.addresses[i]);
 
   }
   
-  fputc('\n', stderr);
-  fprintf(stderr, ASAN_NAME_STR " can not provide additional info.\n");
+  fputc('\n', fp_log);
+  fprintf(fp_log, ASAN_NAME_STR " can not provide additional info.\n");
   
   const char* printable_pc = asan_giovese_printaddr(pc);
   if (!printable_pc) printable_pc = "";
-  fprintf(stderr,
+  fprintf(fp_log,
           "SUMMARY: " ASAN_NAME_STR
           ": %s\n", printable_pc);
 
-  fprintf(stderr, "==%d==ABORTING\n", getpid());
+  fprintf(fp_log, "==%d==ABORTING\n", getpid());
+
+  fflush(fp_log);
+
   return signum;
 
 }
@@ -1454,7 +1472,7 @@ int asan_giovese_badfree(target_ulong addr, target_ulong pc) {
   struct call_context ctx;
   asan_giovese_populate_context(&ctx, pc);
 
-  fprintf(stderr,
+  fprintf(fp_log,
           "================================================================="
           "\n" ANSI_COLOR_HRED "==%d==ERROR: " ASAN_NAME_STR
           ": attempting free on address which was not malloc()-ed: 0x"
@@ -1466,23 +1484,26 @@ int asan_giovese_badfree(target_ulong addr, target_ulong pc) {
 
     char* printable = asan_giovese_printaddr(ctx.addresses[i]);
     if (printable)
-      fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "%s\n", i, ctx.addresses[i],
+      fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "%s\n", i, ctx.addresses[i],
               printable);
     else
-      fprintf(stderr, "    #%zu 0x" TARGET_FMT_lx "\n", i, ctx.addresses[i]);
+      fprintf(fp_log, "    #%zu 0x" TARGET_FMT_lx "\n", i, ctx.addresses[i]);
 
   }
   
-  fputc('\n', stderr);
+  fputc('\n', fp_log);
   print_alloc_location(addr, addr);
   
   const char* printable_pc = asan_giovese_printaddr(pc);
   if (!printable_pc) printable_pc = "";
-  fprintf(stderr,
+  fprintf(fp_log,
           "SUMMARY: " ASAN_NAME_STR
           ": bad-free %s\n", printable_pc);
 
-  fprintf(stderr, "==%d==ABORTING\n", getpid());
+  fprintf(fp_log, "==%d==ABORTING\n", getpid());
+
+  fflush(fp_log);
+
   signal(SIGABRT, SIG_DFL);
   abort();
 
