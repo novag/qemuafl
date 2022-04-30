@@ -71,6 +71,17 @@ struct chunk_info* asan_giovese_alloc_search(target_ulong query) {
 
 }
 
+static uint64_t get_cur_time(void) {
+
+  struct timeval  tv;
+  struct timezone tz;
+
+  gettimeofday(&tv, &tz);
+
+  return (tv.tv_sec * 1000ULL) + (tv.tv_usec / 1000);
+
+}
+
 void asan_giovese_alloc_insert(target_ulong start, target_ulong end,
                                struct call_context* alloc_ctx) {
 
@@ -1319,10 +1330,11 @@ int asan_giovese_report_and_crash(int access_type, target_ulong addr, size_t n,
   
   fprintf(fp_log,
           "=================================================================\n"
+          "time:%" PRIu64 "\n"
           ANSI_COLOR_HRED "==%d==ERROR: " ASAN_NAME_STR ": %s on address 0x"
           TARGET_FMT_lx " at pc 0x" TARGET_FMT_lx " bp 0x" TARGET_FMT_lx
           " sp 0x" TARGET_FMT_lx ANSI_COLOR_RESET "\n",
-          getpid(), error_type, addr, pc, bp, sp);
+          get_cur_time(), getpid(), error_type, addr, pc, bp, sp);
 
   fprintf(fp_log,
           ANSI_COLOR_HBLU "%s of size %zu at 0x" TARGET_FMT_lx " thread T%d"
@@ -1432,11 +1444,12 @@ int asan_giovese_deadly_signal(int signum, target_ulong addr, target_ulong pc, t
   fprintf(fp_log,
           ASAN_NAME_STR ":DEADLYSIGNAL\n"
           "=================================================================\n"
+          "time:%" PRIu64 "\n"
           ANSI_COLOR_HRED "==%d==ERROR: " ASAN_NAME_STR
           ": %s on unknown address 0x" TARGET_FMT_lx " (pc 0x" TARGET_FMT_lx
           " bp 0x" TARGET_FMT_lx " sp 0x" TARGET_FMT_lx " T%d)" ANSI_COLOR_RESET
           "\n",
-          getpid(), error_type, addr, pc, bp, sp, ctx.tid);
+          get_cur_time(), getpid(), error_type, addr, pc, bp, sp, ctx.tid);
 
   size_t i;
   for (i = 0; i < ctx.size; ++i) {
@@ -1473,11 +1486,12 @@ int asan_giovese_badfree(target_ulong addr, target_ulong pc) {
   asan_giovese_populate_context(&ctx, pc);
 
   fprintf(fp_log,
-          "================================================================="
-          "\n" ANSI_COLOR_HRED "==%d==ERROR: " ASAN_NAME_STR
+          "=================================================================\n"
+          "time:%" PRIu64 "\n"
+          ANSI_COLOR_HRED "==%d==ERROR: " ASAN_NAME_STR
           ": attempting free on address which was not malloc()-ed: 0x"
-          TARGET_FMT_lx " in thread T%d" ANSI_COLOR_RESET "\n", getpid(), addr,
-          ctx.tid);
+          TARGET_FMT_lx " in thread T%d" ANSI_COLOR_RESET "\n",
+          get_cur_time(), getpid(), addr, ctx.tid);
 
   size_t i;
   for (i = 0; i < ctx.size; ++i) {
